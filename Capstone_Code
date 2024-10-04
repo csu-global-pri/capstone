@@ -1,0 +1,73 @@
+library(dplyr)
+library(ggplot2)
+library(readxl)
+
+#Load dataset from excel file
+Screentime_v_Mental_Health_Dataset <- read_excel("~/Desktop/Screentime_v_Mental_Health_Dataset.xlsx")
+
+#Dataframe for entire dataset
+df <-Screentime_v_Mental_Health_Dataset
+
+#View data
+head(df)
+
+#I subset my data to include only young children only since it is the polulation of interest, which I
+#limit to ages 0-5
+df_young_children <- df %>%
+  filter(Age >= 0 & Age <= 5)
+
+#I verify data is correct
+head(df_young_children)
+
+#Number of participants
+count(df_young_children)
+
+#Mean Age
+mean(df_young_children$Age)
+
+#Table to examine hours of screen time and mental health treatment is needed
+table(df_young_children$Screentime, df_young_children$Mental_Health_Treatment)
+
+#Table to examine hours of screen time and sex
+table(df_young_children$Sex, df_young_children$Mental_Health_Treatment)
+
+#Table to examine hours of screen time and age
+table(df_young_children$Age, df_young_children$Mental_Health_Treatment)
+
+
+#Visualizations for counts
+ggplot(df_young_children, aes(x = Mental_Health_Treatment, fill = Screentime)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Screen Time by Mental Health Treatment", x = "Mental Health Treatment", y = "Count") +
+  theme_minimal()
+
+#I am doing the same analysis as above but showing percentages
+# Calculate percentages
+df_percent <- df_young_children %>%
+  group_by(Screentime) %>%
+  mutate(total = n()) %>%
+  group_by(Screentime, Mental_Health_Treatment) %>%
+  summarise(count = n(), total = first(total)) %>%
+  mutate(percentage = count / total * 100)
+
+# Plot using ggplot
+ggplot(df_percent, aes(y = Screentime, x = percentage, fill = Mental_Health_Treatment)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Percentages for Mental Health Treatment by Screen Time", 
+       y = "Screen Time", x = "Percentage of Children") +
+  theme_minimal()
+
+
+
+# Creating a contingency table for Screentime and Mental_Health_Treatment
+contingency_table <- table(df_young_children$Screentime, df_young_children$Mental_Health_Treatment)
+
+# Perform the Chi-square test
+chi_test <- chisq.test(contingency_table)
+
+# Print the p-value
+chi_test$p.value
+
+
+
+
